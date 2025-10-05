@@ -1,0 +1,415 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mobility Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .video-panel, .control-panel {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 aspect ratio */
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .video-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .status-item {
+            text-align: center;
+        }
+        
+        .status-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .status-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn.active {
+            background: #4a9eff;
+            box-shadow: 0 0 15px rgba(74, 158, 255, 0.5);
+        }
+        
+        .mode-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .action-btn.primary {
+            background: #ff6b6b;
+        }
+        
+        .action-btn.primary:hover {
+            background: #ff5252;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .info-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        
+        .info-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .voice-commands {
+            margin-top: 20px;
+        }
+        
+        .command-list {
+            list-style-type: none;
+            margin-top: 10px;
+        }
+        
+        .command-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .command-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .command-keyword {
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Mobility Assistant</h1>
+            <p class="subtitle">Helping visually impaired users navigate and read text</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="video-panel">
+                <h2>Live Camera View</h2>
+                <div class="video-container">
+                    <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Live Camera Feed">
+                </div>
+                
+                <div class="status-bar">
+                    <div class="status-item">
+                        <div class="status-label">Mode</div>
+                        <div class="status-value" id="modeDisplay">Walk</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">FPS</div>
+                        <div class="status-value" id="fpsDisplay">0.0</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Objects</div>
+                        <div class="status-value" id="objectsDisplay">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <h2>Controls</h2>
+                
+                <div class="mode-selector">
+                    <button class="mode-btn active" id="walkModeBtn">Walk Mode</button>
+                    <button class="mode-btn" id="readModeBtn">Read Mode</button>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn" id="repeatBtn">Repeat Text</button>
+                    <button class="action-btn" id="whatsAheadBtn">What's Ahead?</button>
+                    <button class="action-btn" id="voiceHelpBtn">Voice Help</button>
+                    <button class="action-btn primary" id="stopBtn">Stop Assistant</button>
+                </div>
+                
+                <div class="info-panel">
+                    <div class="info-title">Detected Text</div>
+                    <div class="info-content" id="ocrText">
+                        No text detected yet. Switch to Read Mode to extract text.
+                    </div>
+                </div>
+                
+                <div class="voice-commands">
+                    <div class="info-title">Voice Commands</div>
+                    <ul class="command-list">
+                        <li>Say <span class="command-keyword">"read mode"</span> to switch to text reading</li>
+                        <li>Say <span class="command-keyword">"walk mode"</span> to switch to navigation</li>
+                        <li>Say <span class="command-keyword">"repeat"</span> to repeat the last detected text</li>
+                        <li>Say <span class="command-keyword">"what's ahead"</span> for obstacle information</li>
+                        <li>Say <span class="command-keyword">"stop"</span> to exit the application</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>AI Mobility Assistant &copy; 2023 | Designed for Accessibility</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM elements
+        const videoFeed = document.getElementById('videoFeed');
+        const modeDisplay = document.getElementById('modeDisplay');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const objectsDisplay = document.getElementById('objectsDisplay');
+        const ocrText = document.getElementById('ocrText');
+        const walkModeBtn = document.getElementById('walkModeBtn');
+        const readModeBtn = document.getElementById('readModeBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        const whatsAheadBtn = document.getElementById('whatsAheadBtn');
+        const voiceHelpBtn = document.getElementById('voiceHelpBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        
+        // Current mode
+        let currentMode = 'walk';
+        
+        // Update status periodically
+        function updateStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    modeDisplay.textContent = data.mode.charAt(0).toUpperCase() + data.mode.slice(1);
+                    fpsDisplay.textContent = data.fps;
+                    objectsDisplay.textContent = data.objects_detected;
+                    
+                    if (data.ocr_text) {
+                        ocrText.textContent = data.ocr_text;
+                    }
+                    
+                    // Update button states
+                    if (data.mode === 'walk') {
+                        walkModeBtn.classList.add('active');
+                        readModeBtn.classList.remove('active');
+                    } else {
+                        walkModeBtn.classList.remove('active');
+                        readModeBtn.classList.add('active');
+                    }
+                    
+                    currentMode = data.mode;
+                })
+                .catch(error => console.error('Error fetching status:', error));
+        }
+        
+        // Set mode
+        function setMode(mode) {
+            fetch('/mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mode: mode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Mode set to:', data.mode);
+            })
+            .catch(error => console.error('Error setting mode:', error));
+        }
+        
+        // Event listeners
+        walkModeBtn.addEventListener('click', () => {
+            setMode('walk');
+        });
+        
+        readModeBtn.addEventListener('click', () => {
+            setMode('read');
+        });
+        
+        repeatBtn.addEventListener('click', () => {
+            fetch('/repeat')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Repeat triggered');
+                })
+                .catch(error => console.error('Error triggering repeat:', error));
+        });
+        
+        whatsAheadBtn.addEventListener('click', () => {
+            // This would trigger the "what's ahead" functionality
+            // In a real implementation, this would call a specific endpoint
+            alert("Asking 'What's ahead?' - check the audio output");
+        });
+        
+        voiceHelpBtn.addEventListener('click', () => {
+            alert("Voice commands are always active. Try saying 'read mode', 'walk mode', 'repeat', 'what's ahead', or 'stop'.");
+        });
+        
+        stopBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to stop the AI assistant?")) {
+                fetch('/stop')
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("AI Assistant is stopping. The page will refresh.");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+                    })
+                    .catch(error => console.error('Error stopping app:', error));
+            }
+        });
+        
+        // Initialize
+        setInterval(updateStatus, 1000); // Update status every second
+        
+        // Handle page visibility change to prevent resource waste
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Page is hidden, could pause video if needed
+            } else {
+                // Page is visible again
+            }
+        });
+    </script>
+</body>
+</html>
