@@ -466,8 +466,10 @@
         setLog("<strong>Camera on.</strong> Say “object mode” to use walking assistant.");
       } catch (err) {
         console.error(err);
-        setLog("Could not access camera. Please allow camera permission and use HTTPS (GitHub Pages).");
-        speak("I cannot access the camera. Please check your permissions.");
+        setLog(
+          "Could not access camera. Please allow camera permission and run this app from <strong>http://localhost</strong> or <strong>HTTPS</strong> (for example GitHub Pages). Opening the file directly will not work."
+        );
+        speak("I cannot access the camera. Please check your permissions and how the page is opened.");
       }
     }
 
@@ -491,8 +493,6 @@
       const boxHeight = bbox[3];
       const relHeight = boxHeight / canvas.height;
 
-      // Very rough estimate based on height in frame.
-      // TUNE THIS CONSTANT if needed for your phone.
       let label = "";
       let meters = 0;
 
@@ -529,17 +529,25 @@
         ctx.strokeStyle = "rgba(34, 197, 94, 0.9)";
         ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
         ctx.beginPath();
-        ctx.roundRect(x, y, w, h, 8);
+        if (typeof ctx.roundRect === "function") {
+          ctx.roundRect(x, y, w, h, 8);
+        } else {
+          // Fallback for older browsers
+          ctx.rect(x, y, w, h);
+        }
         ctx.stroke();
 
         const label = `${p.class} ~${meters.toFixed(1)}m`;
         const textX = x + 6;
-        const textY = y + 18;
+        const textY = y - 6;
 
-        ctx.fillRect(x, y - 22, ctx.measureText(label).width + 14, 22);
+        const textWidth = ctx.measureText(label).width + 14;
+        const boxY = y - 22 < 0 ? y + 4 : y - 22;
+
+        ctx.fillRect(x, boxY, textWidth, 22);
         ctx.fillStyle = "#e5e7eb";
         ctx.font = "13px system-ui";
-        ctx.fillText(label, textX, textY);
+        ctx.fillText(label, textX, boxY + 15);
       });
     }
 
@@ -550,7 +558,6 @@
       const now = Date.now();
       if (now - lastSpokenTime < SPEAK_INTERVAL_MS) return;
 
-      // Pick the closest (largest) object
       const sorted = predictions.slice().sort((a, b) => b.bbox[3] - a.bbox[3]);
       const best = sorted[0];
       const { meters } = estimateDistanceMeters(best.bbox);
@@ -603,7 +610,6 @@
       setLog("Capturing frame and scanning for text…");
       speak("Scanning text. Please hold still.");
 
-      // Pause detection to free resources
       isDetecting = false;
       ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -635,7 +641,6 @@
         setLog("Error reading text. See console for details.");
         speak("Something went wrong while reading the text.");
       } finally {
-        // Resume detection for object mode
         if (currentMode === "object" && objectModel && isCameraOn) {
           isDetecting = true;
           detectLoop();
@@ -667,7 +672,6 @@
         updateModeUI();
         setLog("Switched to book mode. Point to text and say 'read'.");
         speak("Book mode.");
-        // No continuous detection needed in book mode
         isDetecting = false;
         ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
@@ -720,7 +724,6 @@
       };
 
       recognition.onend = () => {
-        // Try to restart for continuous listening
         try {
           recognition.start();
         } catch (e) {
@@ -728,12 +731,8 @@
         }
       };
 
-      try {
-        recognition.start();
-        setLog("Voice commands ready. Say “object mode” or “book mode”.");
-      } catch (err) {
-        console.warn("Speech recognition start failed:", err);
-      }
+      // IMPORTANT: some browsers only allow start after user interaction.
+      // So we call this from a user action instead of automatically.
     }
 
     // ------------------------------
@@ -754,6 +753,19 @@
         } else {
           startCamera();
           toggleCameraBtn.innerHTML = '<span class="btn-icon">✅</span><span>On</span>';
+
+          // Start voice recognition on first user interaction (more mobile-friendly)
+          if (!recognition) {
+            initVoiceRecognition();
+          }
+          if (recognition) {
+            try {
+              recognition.start();
+              setLog("Voice commands ready. Say “object mode” or “book mode”.");
+            } catch (err) {
+              console.warn("Speech recognition start failed:", err);
+            }
+          }
         }
       });
 
@@ -811,6 +823,13 @@
       setSpeechBadge();
       updateModeUI();
 
+      // Warn if not secure context (file:// or plain http without localhost)
+      if (!window.isSecureContext && location.hostname !== "localhost") {
+        setLog(
+          "This page is not in a secure context. Please run from <strong>http://localhost</strong> or <strong>HTTPS</strong> (GitHub Pages). Camera and microphone may not work here."
+        );
+      }
+
       try {
         objectModel = await cocoSsd.load();
         setLog("Object detection ready. Turn on the camera to begin.");
@@ -822,7 +841,6 @@
       }
 
       initButtons();
-      initVoiceRecognition();
     }
 
     window.addEventListener("load", init);
