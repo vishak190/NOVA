@@ -9,44 +9,50 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 
-  <!-- Tesseract.js for OCR (reading books/text) -->
+  <!-- Tesseract.js for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
 
   <style>
     :root {
-      --bg: #020617;
+      --bg: #000000;
       --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.15);
+      --accent-soft: rgba(34, 197, 94, 0.16);
       --text-main: #f9fafb;
       --text-subtle: #9ca3af;
       --danger: #f97373;
+      --card-bg: rgba(15, 23, 42, 0.96);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at top, #0f172a 0, #020617 45%, #000 100%);
+      background: #000;
       color: var(--text-main);
+      width: 100vw;
       height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: stretch;
     }
 
     .app {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
+      width: 100vw;
+      height: 100vh;
+      max-width: 100vw;
+      margin: 0;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      padding: 12px;
-      gap: 10px;
+      padding: 0;
+      gap: 0;
     }
 
     header {
@@ -54,10 +60,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 6px 10px;
-      border-radius: 999px;
+      border-radius: 0;
       background: rgba(15, 23, 42, 0.9);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(16px);
+      z-index: 2;
     }
 
     .logo-text {
@@ -92,21 +99,23 @@
 
     .main-card {
       flex: 1;
+      width: 100vw;
+      height: 100%;
       position: relative;
-      border-radius: 24px;
+      border-radius: 0;
       overflow: hidden;
-      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.25), transparent 55%),
-                  radial-gradient(circle at 100% 0, rgba(59, 130, 246, 0.18), transparent 55%),
-                  #020617;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: #000;
+      border: none;
       display: flex;
-      flex-direction: column;
+      flex-direction: column; /* mobile: stacked */
     }
 
     .video-wrapper {
       position: relative;
       flex: 1;
-      background: #0b1120;
+      width: 100%;
+      height: 100%;
+      background: #000;
     }
 
     video,
@@ -118,20 +127,28 @@
       object-fit: cover;
     }
 
+    .video-overlay-fade {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, transparent 40%, #020617 100%);
+      pointer-events: none;
+    }
+
     .status-bar {
       position: absolute;
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
+      top: 10px;
+      left: 10px;
+      right: 10px;
       padding: 6px 9px;
       border-radius: 999px;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.9);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       font-size: 11px;
       color: var(--text-subtle);
+      z-index: 2;
     }
 
     .status-bar strong {
@@ -151,40 +168,160 @@
       box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
     }
 
-    .bottom-panel {
-      padding: 10px 12px 4px;
+    /* ---------- CENTER OBJECT CARD ---------- */
+    .object-card {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      transform: translate(-50%, -50%);
+      width: 82%;
+      max-width: 360px;
+      background: var(--card-bg);
+      border-radius: 22px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      background: rgba(15, 23, 42, 0.9);
-      border-top: 1px solid rgba(148, 163, 184, 0.3);
-      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      z-index: 1;
     }
 
-    .mode-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .pill {
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      color: var(--text-subtle);
+    .object-card-tabs {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 999px;
+      padding: 2px;
+      gap: 2px;
+      font-size: 11px;
     }
 
-    .pill span.mode-label {
+    .object-card-tab {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 11px;
+      cursor: default;
+      background: transparent;
+      color: var(--text-subtle);
+      text-transform: none;
+    }
+
+    .object-card-tab.active {
+      background: var(--accent-soft);
       color: var(--accent);
       font-weight: 600;
+    }
+
+    .object-card-title {
+      font-size: 11px;
+      color: var(--text-subtle);
       text-transform: uppercase;
       letter-spacing: 0.12em;
+    }
+
+    .object-card-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .object-card-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 30% 20%, #22c55e, #0b1120);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .object-card-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .object-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .object-meta {
+      font-size: 12px;
+      color: var(--text-subtle);
+      line-height: 1.4;
+    }
+
+    .object-meta strong {
+      color: var(--text-main);
+    }
+
+    .object-card-footer {
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-subtle);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.16);
+    }
+
+    /* ---------- BOTTOM / SIDE SHEET ---------- */
+    .bottom-panel {
+      padding: 10px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.96);
+      border-top: 1px solid rgba(148, 163, 184, 0.35);
+      backdrop-filter: blur(22px);
+    }
+
+    .scene-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .scene-count {
+      font-weight: 600;
+    }
+
+    .lang-indicator {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-subtle);
+    }
+
+    .scene-main {
+      font-size: 12px;
+      color: var(--text-main);
+    }
+
+    .scene-list {
+      font-size: 11px;
+      color: var(--text-subtle);
+      max-height: 76px;
+      overflow: hidden;
+    }
+
+    .scene-list-line + .scene-list-line {
+      margin-top: 2px;
     }
 
     .hint {
@@ -192,80 +329,86 @@
       color: var(--text-subtle);
     }
 
-    .controls-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    button {
-      border: none;
-      outline: none;
-      cursor: pointer;
-      border-radius: 999px;
-      padding: 10px 8px;
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
-    }
-
-    button:active {
-      transform: scale(0.96);
-      box-shadow: none;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #052e16;
-      box-shadow: 0 12px 28px rgba(34, 197, 94, 0.55);
-    }
-
-    .btn-secondary {
-      background: rgba(15, 23, 42, 0.95);
-      color: var(--text-main);
-      border: 1px solid rgba(148, 163, 184, 0.55);
-    }
-
-    .btn-danger {
-      background: rgba(127, 29, 29, 0.9);
-      color: #fee2e2;
-      border: 1px solid rgba(248, 113, 113, 0.9);
-    }
-
-    .btn-icon {
-      font-size: 16px;
-    }
-
     .log {
-      min-height: 32px;
+      display: none;
+      font-size: 10px;
+    }
+
+    /* NEW: voice command display */
+    .voice-command-display {
       font-size: 11px;
       color: var(--text-subtle);
-    }
-
-    .log strong {
-      color: var(--text-main);
+      padding: 4px 6px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      margin-top: 2px;
+      max-height: 38px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     @media (max-height: 640px) {
-      .app {
-        padding: 6px;
-      }
       header {
         padding: 4px 8px;
       }
-      .bottom-panel {
-        padding: 8px 10px 2px;
+      .object-card {
+        top: 50%;
       }
-      button {
-        padding: 8px 6px;
-        font-size: 12px;
+      .bottom-panel {
+        padding: 8px 10px 6px;
+      }
+    }
+
+    /* -----------------------------
+       DESKTOP / LARGE SCREEN LAYOUT
+       ----------------------------- */
+    @media (min-width: 900px) {
+      body {
+        align-items: stretch;
+      }
+
+      .app {
+        max-width: 100vw;
+        min-height: 100vh;
+        padding: 0;
+        gap: 0;
+      }
+
+      .main-card {
+        flex: 1;
+        flex-direction: row; /* camera left, panel right */
+      }
+
+      .video-wrapper {
+        flex: 3;
+        min-height: 480px;
+      }
+
+      .bottom-panel {
+        flex: 2;
+        border-top: none;
+        border-left: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 14px 16px;
+        max-width: 380px;
+      }
+
+      .scene-list {
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      .object-card {
+        width: 70%;
+        max-width: 420px;
+      }
+    }
+
+    /* Optional: hide header in landscape for pure camera feel */
+    @media (orientation: landscape) {
+      header {
+        display: none;
       }
     }
   </style>
@@ -285,6 +428,7 @@
       <div class="video-wrapper">
         <video id="camera" autoplay playsinline muted></video>
         <canvas id="overlay"></canvas>
+        <div class="video-overlay-fade"></div>
 
         <div class="status-bar">
           <div style="display:flex; align-items:center; gap:6px;">
@@ -293,50 +437,71 @@
           </div>
           <div id="distance-status">Waiting for camera…</div>
         </div>
+
+        <!-- Center floating object info card -->
+        <section class="object-card" aria-live="polite">
+          <div class="object-card-tabs">
+            <button class="object-card-tab active" type="button">Object info</button>
+            <button class="object-card-tab" type="button">Scene</button>
+          </div>
+
+          <div class="object-card-title" id="primary-object-title">
+            Nearest object
+          </div>
+
+          <div class="object-card-main">
+            <div class="object-card-avatar" id="primary-object-icon">
+              🧭
+            </div>
+            <div class="object-card-text">
+              <div class="object-name" id="primary-object-name">
+                Looking for objects…
+              </div>
+              <div class="object-meta" id="primary-object-meta">
+                Move the phone slowly in front of you.
+              </div>
+            </div>
+          </div>
+
+          <div class="object-card-footer">
+            <div class="chip" id="primary-object-chip">
+              No objects detected yet
+            </div>
+            <div style="font-size:11px;">
+              Voice only — say: <strong>“object mode”</strong>,
+              <strong>“book mode”</strong>, <strong>“read”</strong>
+            </div>
+          </div>
+        </section>
       </div>
 
+      <!-- Bottom / side panel for scene details -->
       <section class="bottom-panel">
-        <div class="mode-row">
-          <div class="pill" id="mode-pill">
-            <span class="mode-label">OBJECT</span>
-            <span id="mode-desc">Walking assistant</span>
-          </div>
-          <div class="hint">
-            Say: <strong>“object mode”</strong> or <strong>“book mode”</strong>
+        <div class="scene-header-row">
+          <div class="scene-count" id="scene-count-label">No objects detected</div>
+          <div class="lang-indicator" id="lang-indicator">
+            Commands: Malayalam
           </div>
         </div>
 
-        <div class="controls-row" aria-label="Main controls">
-          <button id="toggle-camera" class="btn-primary">
-            <span class="btn-icon">📷</span>
-            <span>Camera</span>
-          </button>
-          <button id="read-text-btn" class="btn-secondary">
-            <span class="btn-icon">📖</span>
-            <span>Read</span>
-          </button>
-          <button id="mute-btn" class="btn-secondary">
-            <span class="btn-icon">🔊</span>
-            <span>Mute</span>
-          </button>
+        <div class="scene-main" id="primary-details">
+          When NOVA finds something, you will hear the name, distance in meters,
+          position, size, and how many similar objects are there.
         </div>
 
-        <div class="controls-row">
-          <button id="object-mode-btn" class="btn-secondary">
-            <span class="btn-icon">🧭</span>
-            <span>Object</span>
-          </button>
-          <button id="book-mode-btn" class="btn-secondary">
-            <span class="btn-icon">📝</span>
-            <span>Book</span>
-          </button>
-          <button id="stop-speaking-btn" class="btn-danger">
-            <span class="btn-icon">⛔</span>
-            <span>Stop</span>
-          </button>
+        <div class="scene-list" id="scene-list"></div>
+
+        <!-- NEW: show last voice command -->
+        <div class="voice-command-display" id="voice-command-display">
+          Waiting for voice command… Tap once and speak.
         </div>
 
-        <div class="log" id="log" aria-live="polite"></div>
+        <div class="hint">
+          Change language: say <strong>“Malayalam mode”</strong> or
+          <strong>“English mode”</strong>. Mute with <strong>“mute”</strong>.
+        </div>
+
+        <div class="log" id="log"></div>
       </section>
     </main>
   </div>
@@ -359,45 +524,115 @@
     let lastSpokenTime = 0;
 
     let recognition = null; // SpeechRecognition instance
+    let recognitionLang = "ml-IN"; // command language (Malayalam or English)
+    let isRecognitionActive = false; // NEW: track if recognition is running
+
+    // Track last voice command for display + 4 sec check
+    let lastVoiceCommand = "";
+    let lastVoiceTime = 0;
+
+    // object memory (for first-time description)
+    let knownObjectSignatures = new Set();
 
     const MIN_CONFIDENCE = 0.6;
-    const SPEAK_INTERVAL_MS = 3000;
+
+    // 🔄 Voice environment updates: every 10 seconds
+    const ENV_SPEAK_INTERVAL_MS = 10000;
+    const PROX_ALERT_INTERVAL_MS = 5000;
+
+    const DETECTION_MEMORY_MS = 20000;
+    let detectionHistory = [];
+    let lastProximityAlertTime = 0;
+
+    const SPEECH_LANG = "en-IN";
+
+    // Interval for mic check and voice display (4 seconds)
+    const VOICE_CHECK_INTERVAL_MS = 4000;
 
     // ------------------------------
-    // HELPERS: UI + SPEECH
+    // FULLSCREEN + AUTO LANDSCAPE
+    // ------------------------------
+    async function forceLandscape() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock("landscape");
+          console.log("Landscape locked");
+        }
+      } catch (e) {
+        console.warn("Orientation lock not supported:", e);
+      }
+    }
+
+    async function requestFullScreen() {
+      const el = document.documentElement;
+      try {
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        }
+      } catch (e) {
+        console.warn("Fullscreen request failed:", e);
+      }
+    }
+
+    let fullscreenRequested = false;
+    document.addEventListener("click", async () => {
+      // First-time fullscreen/orientation
+      if (!fullscreenRequested) {
+        fullscreenRequested = true;
+        await requestFullScreen();
+        await forceLandscape();
+      }
+
+      // Start speech recognition on first user tap
+      if (recognition && !isRecognitionActive) {
+        try {
+          recognition.start();
+          console.log("Trying to start recognition from user click");
+          setLog("Voice commands active. Say object mode, book mode, or read.");
+          const vDisplay = document.getElementById("voice-command-display");
+          vDisplay.textContent = "Listening… Say a command like 'object mode' or 'read'.";
+        } catch (e) {
+          console.warn("Failed to start recognition on click:", e);
+        }
+      }
+    });
+
+    // ------------------------------
+    // HELPERS
     // ------------------------------
     function setLog(message) {
       const log = document.getElementById("log");
       log.innerHTML = message;
     }
 
-    function speak(text) {
+    function speak(text, options = {}) {
       if (!speechEnabled) return;
       if (!("speechSynthesis" in window)) {
         console.warn("SpeechSynthesis not supported");
         return;
       }
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.lang = "en-US";
+      utterance.rate = options.rate || 1.0;
+      utterance.pitch = options.pitch || 1.0;
+      utterance.lang = options.lang || SPEECH_LANG;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     }
 
+    function vibrate(pattern) {
+      if (navigator.vibrate) {
+        navigator.vibrate(pattern);
+      }
+    }
+
     function updateModeUI() {
       const modeLabel = document.getElementById("mode-label");
-      const modePill = document.getElementById("mode-pill");
-      const modeDesc = document.getElementById("mode-desc");
-
       if (currentMode === "object") {
         modeLabel.innerHTML = "<strong>Object</strong> mode";
-        modePill.querySelector(".mode-label").textContent = "OBJECT";
-        modeDesc.textContent = "Walking assistant";
       } else {
         modeLabel.innerHTML = "<strong>Book</strong> mode";
-        modePill.querySelector(".mode-label").textContent = "BOOK";
-        modeDesc.textContent = "Reading text";
       }
     }
 
@@ -426,6 +661,27 @@
       }
     }
 
+    function setRecognitionLanguage(langCode) {
+      recognitionLang = langCode;
+      if (recognition) {
+        recognition.lang = recognitionLang;
+        try {
+          recognition.stop();
+        } catch (e) {}
+        // will restart via onend OR user tap
+      }
+      const langLabel = langCode === "ml-IN" ? "Malayalam" : "English";
+      document.getElementById("lang-indicator").textContent =
+        "Commands: " + langLabel;
+      setLog(`Command language: ${langLabel}.`);
+      speak(`${langLabel} command mode.`, { rate: 1.0 });
+    }
+
+    function formatMeters(meters) {
+      const rounded = Math.round(meters * 10) / 10;
+      return rounded.toFixed(1); // 1 decimal place
+    }
+
     // ------------------------------
     // CAMERA
     // ------------------------------
@@ -436,10 +692,8 @@
         ctx = canvas.getContext("2d");
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" }
-          },
-          audio: false
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
         });
 
         video.srcObject = stream;
@@ -457,19 +711,18 @@
         isCameraOn = true;
         setCameraStatus(true);
 
-        // Start object detection loop if model is ready
-        if (objectModel && !isDetecting) {
+        if (objectModel && !isDetecting && currentMode === "object") {
           isDetecting = true;
           detectLoop();
         }
 
-        setLog("<strong>Camera on.</strong> Say “object mode” to use walking assistant.");
+        setLog("<strong>Camera on.</strong> Voice control is ready after you tap once.");
       } catch (err) {
         console.error(err);
         setLog(
-          "Could not access camera. Please allow camera permission and run this app from <strong>http://localhost</strong> or <strong>HTTPS</strong> (for example GitHub Pages). Opening the file directly will not work."
+          "Could not access camera. Please allow camera permission and run this app from <strong>http://localhost</strong> or <strong>HTTPS</strong>."
         );
-        speak("I cannot access the camera. Please check your permissions and how the page is opened.");
+        speak("I cannot access the camera. Please check permissions.");
       }
     }
 
@@ -486,36 +739,61 @@
     }
 
     // ------------------------------
-    // OBJECT DETECTION + DISTANCE
+    // DISTANCE + DIRECTION + SIZE LABELS
     // ------------------------------
     function estimateDistanceMeters(bbox) {
-      // bbox = [x, y, width, height] in pixels
       const boxHeight = bbox[3];
       const relHeight = boxHeight / canvas.height;
 
-      let label = "";
+      let positionLabel = "";
       let meters = 0;
 
       if (relHeight > 0.6) {
-        label = "very close";
+        positionLabel = "very close";
         meters = 0.5;
       } else if (relHeight > 0.4) {
-        label = "close";
+        positionLabel = "close";
         meters = 1.0;
       } else if (relHeight > 0.25) {
-        label = "medium distance";
+        positionLabel = "medium distance";
         meters = 2.0;
       } else if (relHeight > 0.15) {
-        label = "far";
+        positionLabel = "far";
         meters = 3.0;
       } else {
-        label = "very far";
+        positionLabel = "very far";
         meters = 4.0;
       }
 
-      return { label, meters };
+      return { positionLabel, meters };
     }
 
+    function getDirection(bbox) {
+      const [x, , w] = bbox;
+      const centerX = x + w / 2;
+      const third = canvas.width / 3;
+
+      if (centerX < third) return "left";
+      if (centerX > 2 * third) return "right";
+      return "center";
+    }
+
+    function getSizeLabel(bbox) {
+      const [, , w, h] = bbox;
+      const area = w * h;
+      const frameArea = canvas.width * canvas.height;
+      const ratio = area / frameArea;
+
+      if (ratio > 0.4) return "very large";
+      if (ratio > 0.25) return "large";
+      if (ratio > 0.12) return "medium";
+      if (ratio > 0.04) return "small";
+      return "very small";
+    }
+
+    // ------------------------------
+    // DRAWING + MEMORY
+    // ------------------------------
     function drawPredictions(predictions) {
       if (!ctx) return;
 
@@ -524,25 +802,23 @@
       predictions.forEach((p) => {
         const [x, y, w, h] = p.bbox;
         const { meters } = estimateDistanceMeters(p.bbox);
+        const metersLabel = formatMeters(meters);
 
         ctx.lineWidth = 3;
         ctx.strokeStyle = "rgba(34, 197, 94, 0.9)";
         ctx.fillStyle = "rgba(15, 23, 42, 0.8)";
         ctx.beginPath();
         if (typeof ctx.roundRect === "function") {
-          ctx.roundRect(x, y, w, h, 8);
+          ctx.roundRect(x, y, w, h, 10);
         } else {
-          // Fallback for older browsers
           ctx.rect(x, y, w, h);
         }
         ctx.stroke();
 
-        const label = `${p.class} ~${meters.toFixed(1)}m`;
+        const label = `${p.class} · ${metersLabel} m`;
         const textX = x + 6;
-        const textY = y - 6;
-
-        const textWidth = ctx.measureText(label).width + 14;
         const boxY = y - 22 < 0 ? y + 4 : y - 22;
+        const textWidth = ctx.measureText(label).width + 14;
 
         ctx.fillRect(x, boxY, textWidth, 22);
         ctx.fillStyle = "#e5e7eb";
@@ -551,29 +827,278 @@
       });
     }
 
-    function maybeSpeakForPredictions(predictions) {
+    function updateDetectionMemory(objects) {
+      const now = Date.now();
+      detectionHistory.push({ time: now, objects });
+
+      const cutoff = now - DETECTION_MEMORY_MS;
+      detectionHistory = detectionHistory.filter((item) => item.time >= cutoff);
+    }
+
+    function getObjectSignature(obj) {
+      const bucket = Math.round(obj.meters * 2) / 2; // 0.5 m groups
+      return `${obj.name}|${obj.dir}|${bucket}`;
+    }
+
+    // ------------------------------
+    // UPDATE UI DETAILS (CARD + BOTTOM SHEET)
+    // ------------------------------
+    function updateObjectDetailsUI(objects) {
+      const sceneCountLabel = document.getElementById("scene-count-label");
+      const primaryDetails = document.getElementById("primary-details");
+      const sceneList = document.getElementById("scene-list");
+
+      const primaryNameEl = document.getElementById("primary-object-name");
+      const primaryMetaEl = document.getElementById("primary-object-meta");
+      const primaryChipEl = document.getElementById("primary-object-chip");
+      const primaryTitleEl = document.getElementById("primary-object-title");
+      const primaryIconEl = document.getElementById("primary-object-icon");
+
+      if (!objects.length) {
+        sceneCountLabel.textContent = "No objects detected";
+        primaryNameEl.textContent = "No objects in front of you";
+        primaryMetaEl.textContent =
+          "Move the phone slowly. I will tell you when I find something.";
+        primaryChipEl.textContent = "Waiting for objects…";
+        primaryTitleEl.textContent = "Nearest object";
+        primaryIconEl.textContent = "🧭";
+        primaryDetails.textContent =
+          "No obstacles detected right now. Keep walking carefully.";
+        sceneList.innerHTML = "";
+        return;
+      }
+
+      const count = objects.length;
+      sceneCountLabel.textContent =
+        count + (count === 1 ? " object detected" : " objects detected");
+
+      const sorted = objects.slice().sort((a, b) => a.meters - b.meters);
+      const nearest = sorted[0];
+      const metersLabel = formatMeters(nearest.meters);
+      const sameCount = objects.filter((o) => o.name === nearest.name).length;
+
+      let sideTextUI = "center";
+      if (nearest.dir === "left") sideTextUI = "left side";
+      if (nearest.dir === "right") sideTextUI = "right side";
+
+      primaryTitleEl.textContent = "Nearest object";
+      primaryNameEl.textContent = nearest.name;
+      primaryMetaEl.innerHTML =
+        `<strong>${metersLabel} m</strong> · ${nearest.positionLabel} · ${nearest.sizeLabel} · ` +
+        `${sameCount} in scene · ${sideTextUI}`;
+      primaryChipEl.textContent =
+        nearest.dir === "center"
+          ? "Straight ahead"
+          : nearest.dir === "left"
+          ? "On your left"
+          : "On your right";
+      primaryIconEl.textContent = nearest.name === "person" ? "👤" : "⬛";
+
+      primaryDetails.textContent =
+        `Nearest: ${nearest.name}, ${metersLabel} meters, ` +
+        `${nearest.positionLabel}, ${nearest.sizeLabel}, on your ${sideTextUI}. ` +
+        `Total ${sameCount} ${nearest.name}${sameCount > 1 ? "s" : ""} in this view.`;
+
+      sceneList.innerHTML = "";
+      sorted.forEach((o, i) => {
+        const line = document.createElement("div");
+        line.className = "scene-list-line";
+        const metersText = formatMeters(o.meters);
+        let sideWord = "center";
+        if (o.dir === "left") sideWord = "left";
+        if (o.dir === "right") sideWord = "right";
+        line.textContent =
+          `${i + 1}. ${o.name} — ${metersText} m, ` +
+          `${o.positionLabel}, ${o.sizeLabel}, ${sideWord}.`;
+        sceneList.appendChild(line);
+      });
+    }
+
+    // ------------------------------
+    // SPEAKING / PROXIMITY
+    // ------------------------------
+    function describeObjectsDetailed(objects, isNewOnly) {
+      if (!objects.length) return;
+
+      const count = objects.length;
+      const intro = isNewOnly
+        ? count === 1
+          ? "New object detected."
+          : `${count} new objects detected.`
+        : `I see ${count} objects in front of you.`;
+
+      const details = objects
+        .map((o, idx) => {
+          const metersText = formatMeters(o.meters);
+          let sideText = "in the center";
+          if (o.dir === "left") sideText = "on your left";
+          if (o.dir === "right") sideText = "on your right";
+          return `Object ${idx + 1}: ${o.name}, ${o.positionLabel}, ${o.sizeLabel}, ${sideText}, about ${metersText} meters.`;
+        })
+        .join(" ");
+
+      const finalText = intro + " " + details;
+      speak(finalText, { rate: 0.9 });
+    }
+
+    function maybeSpeakEnvironment(objects) {
       if (!speechEnabled) return;
-      if (!predictions.length) return;
+      if (!objects.length) {
+        document.getElementById("distance-status").textContent =
+          "No obstacle detected.";
+        return;
+      }
 
       const now = Date.now();
-      if (now - lastSpokenTime < SPEAK_INTERVAL_MS) return;
+      const newObjects = [];
+      objects.forEach((o) => {
+        const sig = getObjectSignature(o);
+        if (!knownObjectSignatures.has(sig)) {
+          knownObjectSignatures.add(sig);
+          newObjects.push(o);
+        }
+      });
 
-      const sorted = predictions.slice().sort((a, b) => b.bbox[3] - a.bbox[3]);
-      const best = sorted[0];
-      const { meters } = estimateDistanceMeters(best.bbox);
+      if (
+        knownObjectSignatures.size &&
+        knownObjectSignatures.size === objects.length &&
+        newObjects.length === objects.length &&
+        lastSpokenTime === 0
+      ) {
+        describeObjectsDetailed(objects, false);
+        lastSpokenTime = now;
+        lastSpokenSummary = "first scene";
+        const nearest = objects.slice().sort((a, b) => a.meters - b.meters)[0];
+        const metersText = formatMeters(nearest.meters);
+        document.getElementById("distance-status").textContent =
+          `Nearest: ${nearest.name} ~${metersText} m, ${nearest.dir}`;
+        return;
+      }
 
-      const sentence = `Obstacle ahead: ${best.class}, about ${meters.toFixed(1)} meters in front of you.`;
+      if (newObjects.length && now - lastSpokenTime > ENV_SPEAK_INTERVAL_MS) {
+        describeObjectsDetailed(newObjects, true);
+        lastSpokenTime = now;
+        lastSpokenSummary = "new objects";
+        const nearest = objects.slice().sort((a, b) => a.meters - b.meters)[0];
+        const metersText = formatMeters(nearest.meters);
+        document.getElementById("distance-status").textContent =
+          `Nearest: ${nearest.name} ~${metersText} m, ${nearest.dir}`;
+        return;
+      }
+
+      if (now - lastSpokenTime < ENV_SPEAK_INTERVAL_MS) return;
+
+      const count = objects.length;
+      const sorted = objects.slice().sort((a, b) => a.meters - b.meters);
+      const top = sorted.slice(0, 3);
+
+      const phraseParts = top.map((o) => {
+        let side = "in the center";
+        if (o.dir === "left") side = "on your left";
+        if (o.dir === "right") side = "on your right";
+        const metersText = formatMeters(o.meters);
+        return `${o.name} ${side}, ${metersText} meters`;
+      });
+
+      const sentence =
+        `${count} object` +
+        (count > 1 ? "s" : "") +
+        ` ahead: ` +
+        phraseParts.join(", ") +
+        ".";
 
       if (sentence === lastSpokenSummary) return;
 
-      speak(sentence);
+      speak(sentence, { rate: 0.95 });
       lastSpokenSummary = sentence;
       lastSpokenTime = now;
 
+      const nearest = sorted[0];
+      const nearestMetersText = formatMeters(nearest.meters);
       const distanceStatus = document.getElementById("distance-status");
-      distanceStatus.textContent = `Nearest: ${best.class} ~${meters.toFixed(1)}m`;
+      distanceStatus.textContent =
+        `Nearest: ${nearest.name} ~${nearestMetersText} m, ${nearest.dir}`;
+
+      // Haptic alert based on distance (no speech here, only vibration)
+      if (nearest.meters <= 0.8) {
+        vibrate([300, 150, 300, 150, 300]);
+      } else if (nearest.meters <= 1.5) {
+        vibrate([200, 120, 200]);
+      }
     }
 
+    function analyzeProximity(objects) {
+      const now = Date.now();
+      if (now - lastProximityAlertTime < PROX_ALERT_INTERVAL_MS) return;
+
+      const persons = objects.filter((o) => o.name === "person");
+      const obstacles = objects.filter((o) => o.name !== "person");
+
+      if (!persons.length || !obstacles.length) return;
+
+      let closestPair = null;
+
+      persons.forEach((p) => {
+        obstacles.forEach((o) => {
+          const depthDiff = Math.abs(p.meters - o.meters);
+          const dirSame =
+            p.dir === o.dir || p.dir === "center" || o.dir === "center";
+
+          if (depthDiff <= 1.2 && dirSame) {
+            const score = depthDiff;
+            if (!closestPair || score < closestPair.score) {
+              closestPair = { p, o, score };
+            }
+          }
+        });
+      });
+
+      if (!closestPair) return;
+
+      const recentPast = detectionHistory.findLast
+        ? detectionHistory.findLast(
+            (d) => now - d.time > 2000 && now - d.time < 5000
+          )
+        : (() => {
+            for (let i = detectionHistory.length - 1; i >= 0; i--) {
+              const d = detectionHistory[i];
+              if (now - d.time > 2000 && now - d.time < 5000) return d;
+            }
+            return null;
+          })();
+
+      if (recentPast) {
+        const prevP = recentPast.objects.find(
+          (o) => o.name === "person" && o.dir === closestPair.p.dir
+        );
+        const prevO = recentPast.objects.find(
+          (o) => o.name === closestPair.o.name && o.dir === closestPair.o.dir
+        );
+        if (prevP && prevO) {
+          const prevGap = Math.abs(prevP.meters - prevO.meters);
+          const nowGap = Math.abs(closestPair.p.meters - closestPair.o.meters);
+          if (nowGap > prevGap + 0.3) {
+            return;
+          }
+        }
+      }
+
+      lastProximityAlertTime = now;
+      const gapMeters = Math.max(
+        0.3,
+        Math.abs(closestPair.p.meters - closestPair.o.meters)
+      );
+      const gapMetersText = formatMeters(gapMeters);
+
+      // HAPTIC-ONLY OBSTACLE ALERT (no voice)
+      vibrate([400, 150, 400, 150, 400]);
+      document.getElementById("distance-status").textContent =
+        `Obstacle alert: gap ~${gapMetersText} m.`;
+    }
+
+    // ------------------------------
+    // MAIN DETECTION LOOP
+    // ------------------------------
     async function detectLoop() {
       if (!isDetecting || !objectModel || !isCameraOn) return;
 
@@ -585,9 +1110,21 @@
 
         if (currentMode === "object") {
           if (filtered.length) {
-            maybeSpeakForPredictions(filtered);
+            const objects = filtered.map((p) => {
+              const { positionLabel, meters } = estimateDistanceMeters(p.bbox);
+              const dir = getDirection(p.bbox);
+              const sizeLabel = getSizeLabel(p.bbox);
+              return { name: p.class, meters, dir, positionLabel, sizeLabel };
+            });
+
+            updateDetectionMemory(objects);
+            updateObjectDetailsUI(objects);
+            maybeSpeakEnvironment(objects);
+            analyzeProximity(objects);
           } else {
-            document.getElementById("distance-status").textContent = "No obstacle detected.";
+            updateObjectDetailsUI([]);
+            document.getElementById("distance-status").textContent =
+              "No obstacle detected.";
           }
         }
       } catch (err) {
@@ -603,12 +1140,12 @@
     async function readCurrentFrameText() {
       if (!isCameraOn || !video || !canvas) {
         setLog("Camera must be on to read text.");
-        speak("Please turn on the camera first.");
+        speak("Please turn on the camera first.", { rate: 1.0 });
         return;
       }
 
       setLog("Capturing frame and scanning for text…");
-      speak("Scanning text. Please hold still.");
+      speak("Scanning text. Please hold still.", { rate: 0.95 });
 
       isDetecting = false;
       ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -623,23 +1160,28 @@
         const dataUrl = tempCanvas.toDataURL("image/png");
 
         const result = await Tesseract.recognize(dataUrl, "eng", {
-          logger: (m) => console.log(m)
+          logger: (m) => console.log(m),
         });
 
         const text = (result.data.text || "").trim();
 
         if (text.length > 0) {
           setLog(`<strong>Reading:</strong> ${text}`);
-          speak("Reading text.");
-          speak(text);
+          speak("Reading text.", { rate: 1.0 });
+          speak(text, { rate: 0.9 });
         } else {
-          setLog("No clear text detected. Try again with closer, brighter image.");
-          speak("I could not see any clear text. Please move closer or adjust the lighting.");
+          setLog(
+            "No clear text detected. Try again with closer, brighter image."
+          );
+          speak(
+            "I could not see any clear text. Please move closer or adjust the lighting.",
+            { rate: 1.0 }
+          );
         }
       } catch (err) {
         console.error(err);
         setLog("Error reading text. See console for details.");
-        speak("Something went wrong while reading the text.");
+        speak("Something went wrong while reading the text.", { rate: 1.0 });
       } finally {
         if (currentMode === "object" && objectModel && isCameraOn) {
           isDetecting = true;
@@ -649,17 +1191,61 @@
     }
 
     // ------------------------------
-    // VOICE COMMANDS
+    // VOICE COMMANDS (EN / ML + LANGUAGE SWITCH)
     // ------------------------------
     function handleVoiceCommand(rawText) {
-      const text = rawText.toLowerCase();
+      const text = rawText.toLowerCase().trim();
       console.log("Voice command:", text);
 
-      if (text.includes("object mode") || text.includes("walking mode")) {
+      // Save + show last command
+      lastVoiceCommand = rawText.trim();
+      lastVoiceTime = Date.now();
+
+      const display = document.getElementById("voice-command-display");
+      display.textContent = `You said: "${lastVoiceCommand}"`;
+
+      const hasAny = (phrases) => phrases.some((p) => text.includes(p));
+
+      if (
+        hasAny([
+          "malayalam mode",
+          "malayalam language",
+          "change language to malayalam",
+          "മലയാളം മോഡ്",
+          "മലയാളം",
+        ])
+      ) {
+        setRecognitionLanguage("ml-IN");
+        return;
+      }
+
+      if (
+        hasAny([
+          "english mode",
+          "english language",
+          "change language to english",
+          "ഇംഗ്ലീഷ് മോഡ്",
+          "ഇംഗ്ലീഷ്",
+        ])
+      ) {
+        setRecognitionLanguage("en-IN");
+        return;
+      }
+
+      if (
+        hasAny([
+          "object mode",
+          "walking mode",
+          "ഓബ്ജക്ട് മോഡ്",
+          "ഓബ്‌ജക്റ്റ് മോഡ്",
+          "നടക്കൽ മോഡ്",
+          "നടക്കല് മോഡ്",
+        ])
+      ) {
         currentMode = "object";
         updateModeUI();
         setLog("Switched to object mode (walking assistant).");
-        speak("Object mode.");
+        speak("Object mode.", { rate: 1.0 });
         if (objectModel && isCameraOn && !isDetecting) {
           isDetecting = true;
           detectLoop();
@@ -667,17 +1253,35 @@
         return;
       }
 
-      if (text.includes("book mode") || text.includes("reading mode")) {
+      if (
+        hasAny([
+          "book mode",
+          "reading mode",
+          "ബുക്ക് മോഡ്",
+          "വായന മോഡ്",
+          "വായിക്കാനുള്ള മോഡ്",
+        ])
+      ) {
         currentMode = "book";
         updateModeUI();
         setLog("Switched to book mode. Point to text and say 'read'.");
-        speak("Book mode.");
+        speak("Book mode.", { rate: 1.0 });
         isDetecting = false;
         ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;
       }
 
-      if (text.includes("mute") || text.includes("stop talking")) {
+      if (
+        hasAny([
+          "mute",
+          "stop talking",
+          "silent",
+          "മ്യൂട്ട്",
+          "ശബ്ദം ഓഫ്",
+          "ശബ്ദം നിർത്തു",
+          "ശബ്ദം നിര്‍ത്തു",
+        ])
+      ) {
         speechEnabled = false;
         window.speechSynthesis.cancel();
         setSpeechBadge();
@@ -685,32 +1289,75 @@
         return;
       }
 
-      if (text.includes("unmute") || text.includes("talk") || text.includes("speak")) {
+      if (
+        hasAny([
+          "unmute",
+          "talk",
+          "speak",
+          "voice on",
+          "ശബ്ദം ഓൺ",
+          "വോയ്സ് ഓൺ",
+          "ശബ്ദം തുടങ്ങൂ",
+          "ശബ്ദം തുടങ്ങു",
+        ])
+      ) {
         speechEnabled = true;
         setSpeechBadge();
         setLog("Voice feedback turned on.");
-        speak("Voice feedback is now on.");
+        speak("Voice feedback is now on.", { rate: 1.0 });
         return;
       }
 
-      if (text.includes("read")) {
+      if (
+        hasAny(["read", "reading", "റീഡ്", "വായിക്കുക", "വായിക്കൂ", "വായിക്കു"])
+      ) {
+        currentMode = "book";
+        updateModeUI();
         readCurrentFrameText();
+        return;
+      }
+
+      if (
+        hasAny([
+          "stop speaking",
+          "stop voice",
+          "voice stop",
+          "ശബ്ദം നിർത്തി",
+          "ശബ്ദം നിർത്തണം",
+        ])
+      ) {
+        window.speechSynthesis.cancel();
+        setLog("Stopped speaking current message.");
         return;
       }
     }
 
     function initVoiceRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         console.warn("SpeechRecognition not supported.");
         setLog("Voice commands not supported in this browser.");
+        const vDisplay = document.getElementById("voice-command-display");
+        vDisplay.textContent = "Voice commands not supported in this browser.";
         return;
       }
 
       recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
+      recognition.lang = recognitionLang;
       recognition.continuous = true;
       recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isRecognitionActive = true;
+        console.log("Speech recognition started");
+      };
+
+      recognition.onend = () => {
+        isRecognitionActive = false;
+        console.log("Speech recognition ended");
+        // Do not auto-start here blindly; 4-second interval + user tap will restart.
+      };
 
       recognition.onresult = (event) => {
         const last = event.results[event.results.length - 1];
@@ -721,98 +1368,42 @@
 
       recognition.onerror = (e) => {
         console.warn("Speech recognition error:", e.error);
-      };
-
-      recognition.onend = () => {
-        try {
-          recognition.start();
-        } catch (e) {
-          console.warn("Could not restart recognition:", e);
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+          setLog(
+            "Microphone permission blocked. Please allow mic access in your browser settings."
+          );
+          speak("I am not allowed to use your microphone. Please check your browser permissions.");
+          const vDisplay = document.getElementById("voice-command-display");
+          vDisplay.textContent = "Mic permission blocked. Check browser settings.";
         }
       };
-
-      // IMPORTANT: some browsers only allow start after user interaction.
-      // So we call this from a user action instead of automatically.
     }
 
     // ------------------------------
-    // BUTTON HANDLERS
+    // 4-SECOND VOICE CHECK LOOP
     // ------------------------------
-    function initButtons() {
-      const toggleCameraBtn = document.getElementById("toggle-camera");
-      const readTextBtn = document.getElementById("read-text-btn");
-      const muteBtn = document.getElementById("mute-btn");
-      const objectModeBtn = document.getElementById("object-mode-btn");
-      const bookModeBtn = document.getElementById("book-mode-btn");
-      const stopSpeakingBtn = document.getElementById("stop-speaking-btn");
-
-      toggleCameraBtn.addEventListener("click", () => {
-        if (isCameraOn) {
-          stopCamera();
-          toggleCameraBtn.innerHTML = '<span class="btn-icon">📷</span><span>Camera</span>';
-        } else {
-          startCamera();
-          toggleCameraBtn.innerHTML = '<span class="btn-icon">✅</span><span>On</span>';
-
-          // Start voice recognition on first user interaction (more mobile-friendly)
-          if (!recognition) {
-            initVoiceRecognition();
-          }
-          if (recognition) {
-            try {
-              recognition.start();
-              setLog("Voice commands ready. Say “object mode” or “book mode”.");
-            } catch (err) {
-              console.warn("Speech recognition start failed:", err);
-            }
+    function startVoiceCheckLoop() {
+      setInterval(() => {
+        // 1) Restart recognition if we have it and it's not active
+        if (recognition && !isRecognitionActive) {
+          try {
+            recognition.start();
+            console.log("4s check: restarting recognition");
+          } catch (e) {
+            console.warn("4s check: cannot restart recognition:", e);
           }
         }
-      });
 
-      readTextBtn.addEventListener("click", () => {
-        currentMode = "book";
-        updateModeUI();
-        readCurrentFrameText();
-      });
-
-      muteBtn.addEventListener("click", () => {
-        speechEnabled = !speechEnabled;
-        setSpeechBadge();
-        if (!speechEnabled) {
-          window.speechSynthesis.cancel();
-          muteBtn.innerHTML = '<span class="btn-icon">🔇</span><span>Muted</span>';
-          setLog("Voice feedback muted.");
+        // 2) Update the visible last command text
+        const display = document.getElementById("voice-command-display");
+        if (!lastVoiceCommand) {
+          display.textContent =
+            "Listening… No voice command detected yet. Say 'object mode' or 'read'.";
         } else {
-          muteBtn.innerHTML = '<span class="btn-icon">🔊</span><span>Mute</span>';
-          setLog("Voice feedback enabled.");
-          speak("Voice feedback is now on.");
+          const secondsAgo = Math.round((Date.now() - lastVoiceTime) / 1000);
+          display.textContent = `Last command (${secondsAgo}s ago): "${lastVoiceCommand}"`;
         }
-      });
-
-      objectModeBtn.addEventListener("click", () => {
-        currentMode = "object";
-        updateModeUI();
-        if (objectModel && isCameraOn && !isDetecting) {
-          isDetecting = true;
-          detectLoop();
-        }
-        setLog("Object mode. I will call out obstacles and distance.");
-        speak("Object mode.");
-      });
-
-      bookModeBtn.addEventListener("click", () => {
-        currentMode = "book";
-        updateModeUI();
-        isDetecting = false;
-        ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setLog("Book mode. Point the camera to text and press Read.");
-        speak("Book mode.");
-      });
-
-      stopSpeakingBtn.addEventListener("click", () => {
-        window.speechSynthesis.cancel();
-        setLog("Stopped speaking current message.");
-      });
+      }, VOICE_CHECK_INTERVAL_MS);
     }
 
     // ------------------------------
@@ -823,24 +1414,42 @@
       setSpeechBadge();
       updateModeUI();
 
-      // Warn if not secure context (file:// or plain http without localhost)
       if (!window.isSecureContext && location.hostname !== "localhost") {
         setLog(
           "This page is not in a secure context. Please run from <strong>http://localhost</strong> or <strong>HTTPS</strong> (GitHub Pages). Camera and microphone may not work here."
         );
       }
 
+      // Check for speech support message
+      if (
+        !("webkitSpeechRecognition" in window) &&
+        !("SpeechRecognition" in window)
+      ) {
+        const vDisplay = document.getElementById("voice-command-display");
+        vDisplay.textContent =
+          "Voice commands not supported. Use Chrome on Android or Desktop.";
+      }
+
       try {
         objectModel = await cocoSsd.load();
-        setLog("Object detection ready. Turn on the camera to begin.");
-        speak("Object detection model is ready.");
+        setLog("Object detection ready. Starting camera. Tap once to enable voice.");
+        speak(
+          "NOVA ready. Camera on. I will describe objects with name, distance in meters, position and size. Tap once, then say object mode for walking, book mode for reading, or say read to read the page. Say Malayalam mode or English mode to change command language.",
+          { rate: 0.9 }
+        );
+
+        await startCamera();
+
+        // Try auto landscape when init runs (may fail silently)
+        await forceLandscape();
+
+        initVoiceRecognition();
+        startVoiceCheckLoop();
       } catch (err) {
         console.error(err);
         setLog("Failed to load object detection model.");
-        speak("I could not load the detection model.");
+        speak("I could not load the detection model.", { rate: 1.0 });
       }
-
-      initButtons();
     }
 
     window.addEventListener("load", init);
